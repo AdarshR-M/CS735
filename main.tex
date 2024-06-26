@@ -1,0 +1,565 @@
+\documentclass{beamer}
+\usepackage{hyperref}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{mathdots}
+\usepackage{yhmath}
+\usepackage{cancel}
+\usepackage{color}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{tabularx}
+\usepackage{extarrows}
+\usepackage{booktabs}
+\usetikzlibrary{fadings}
+\usetikzlibrary{patterns}
+\usetikzlibrary{shadows.blur}
+\usetikzlibrary{shapes}
+\usetheme{Madrid}
+% \usecolortheme{beaver}
+\definecolor{myblue}{RGB}{10, 35, 68}
+\definecolor{mygreen}{RGB}{42, 96, 91}
+
+\begin{filecontents}{beamercolorthememyblue.sty}
+\mode<presentation>
+\setbeamercolor{section in toc}{fg=black,bg=white}
+\setbeamercolor{alerted text}{fg=myblue!80!gray}
+\setbeamercolor*{palette primary}{bg=myblue!95,fg=white}
+\setbeamercolor*{palette secondary}{fg=myblue!70!black,bg=gray!15!white}
+\setbeamercolor*{palette tertiary}{bg=myblue!80!black,fg=gray!10!white}
+\setbeamercolor*{palette quaternary}{fg=myblue,bg=gray!5!white}
+
+\setbeamercolor*{sidebar}{fg=myblue,bg=gray!15!white}
+
+\setbeamercolor*{palette sidebar primary}{fg=myblue!10!black}
+\setbeamercolor*{palette sidebar secondary}{fg=white}
+\setbeamercolor*{palette sidebar tertiary}{fg=myblue!50!black}
+\setbeamercolor*{palette sidebar quaternary}{fg=gray!10!white}
+
+%\setbeamercolor*{titlelike}{parent=palette primary}
+\setbeamercolor{titlelike}{parent=palette primary}
+\setbeamercolor{frametitle}{parent=palette primary}
+\setbeamercolor{frametitle right}{bg=gray!60!white}
+
+\setbeamercolor*{separation line}{}
+\setbeamercolor*{fine separation line}{}
+\mode
+<all>
+\end{filecontents}
+
+\renewcommand{\r}[1]{\text{\rmfamily{\textbf{#1}}}}
+\renewcommand{\b}[1]{\boldsymbol{#1}}
+\newcommand{\zero}[0]{\b{0}}
+\newcommand{\cmd}[0]{\text{\rmfamily{\textbf{cmd}}}}
+\newcommand{\test}[0]{\text{\rmfamily{\textbf{test}}}}
+\newcommand{\inc}[0]{\text{\rmfamily{\textbf{inc}}}}
+\newcommand{\dec}[0]{\text{\rmfamily{\textbf{dec}}}}
+\newcommand{\lo}[0]{\text{\rmfamily{\textbf{loop}}}}
+\newcommand{\loopam}[2]{\text{\rmfamily{\textbf{loop} at most $#1$ times $#2$}}}
+\newcommand{\Or}[0]{\text{\rmfamily{\textbf{or}}}}
+\newcommand{\prog}[1]{\xrightarrow[]{#1}}
+
+\usecolortheme{myblue}
+
+% \colorlet{beamer@blendedblue}{myblue}
+\definecolor{links}{HTML}{2A1B81}
+\hypersetup{colorlinks,linkcolor=,urlcolor=links}
+
+\title[Reachability in Petri Nets]{The Reachability Problem for Petri Nets is Not Primitive Recursive}
+\author[CS 735]{CS 735 \\ Based on paper by J\'{e}r\^{o}me Leroux}
+% \institute{Adarsh}
+\date{April 2, 2024}
+
+\AtBeginSection[]
+{
+    \begin{frame}
+        \frametitle{Table of Contents}
+        \tableofcontents[currentsection]
+    \end{frame}
+}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% \begin{frame}
+% \frametitle{Table of Contents}
+% \tableofcontents[currentsection]
+% \end{frame}
+
+\section{Introduction}
+
+\begin{frame}{Introduction}
+    \begin{itemize}
+         \item First we introduce general, test-free and checking programs.
+        \item Connection between petri-nets reachability and reachability in checking programs. 
+        \pause
+        \item We show that reachability in a $(2n+4)$-dimensional checking program is in $\mathcal{O}(F_{n+1}(n)) = F_\omega(n)$, hence, the problem is $\mathbb{F}_\omega$-hard. 
+        \item J. Leroux and S. Schmitz [LICS 2019] shows that the problem is in $\mathbb{F}_\omega$.
+        \item Hence we conclude that the reachabiliy in checking programs, and, by extension petri-nets, is $\mathbb{F}_\omega$-complete.  
+    \end{itemize}
+   
+\end{frame}
+
+\section{Programs}
+
+\begin{frame}{Counters and Configurations}
+
+\begin{itemize}
+    \item Consider an infinite, countable set of \textbf{counters} $\mathbb{C}$ (just like we have a countable set of variables in propositional logic).
+
+    \item A \textbf{configuration} $\rho$ is a map from $\mathbb{C}$ to $\mathbb{N}$ such that the number of non-zero counters is finite. That is,
+    $$|\{c \, | \, \rho(c) > 0,  c\in \mathbb{C}\}| < \infty$$
+    \item $\zero{}$ denotes the configuration where $\rho(c)=0$ $\forall$ $c\in \mathbb{C}$.
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Command}
+A relation $\prog{\cmd}$ is defined by $\alpha \prog{\cmd} \beta$ over configurations as 
+
+\begin{itemize}
+    \item If \cmd{} is \inc(c), $\beta(c) = \alpha(c)+1$ and $\forall$ $x\neq c$, $\beta(x) = \alpha(x)$. Informally, this is equivalent to $c$ += 1. 
+    \pause
+    \item If \cmd{} is \dec(c), $\beta(c) = \alpha(c)-1$ and $\forall$ $x\neq c$, $\beta(x) = \alpha(x)$. Informally, this is equivalent to $c$ $-$= 1. 
+    \pause
+    \item If \cmd{} is \test(c), $\beta(c) = \alpha(c) = 0$ and $\forall$ $x\neq c$, $\beta(x) = \alpha(x)$. Informally, this is equivalent to $c$ == 0.
+\end{itemize}
+
+Also $\r{r}(c_1,\dots,c_n) = \r{r}(c_1);\dots;\r{r}(c_n)$, $\r{r} \in \{\inc,\dec,\test\}$.
+\end{frame}
+
+\begin{frame}{Programs}
+\begin{itemize}
+    \item A \textbf{general program} (or program) $M$ is 
+    $$M := \cmd \,|\, \lo\, M_0 |\, M_1 ; M_2 \,|\, M_1 \,\Or \,M_2$$
+    where $M_0$, $M_1$ and $M_2$ are programs.
+    \pause
+    \item Every program $M$ is associated with the binary relation $\prog{M}$,
+    $$\prog{M} \quad = \quad \begin{cases}
+        \prog{\cmd} & \text{if } M = \cmd \\
+        \big(\prog{M_0}\big)^* & \text{if } M = \lo\\
+        \prog{M_1};\prog{M_2} & \text{if } M = M_1;M_2\\
+        \prog{M_1}\cup\prog{M_2} & \text{if } M = M_1 \, \Or \, M_2\\
+    \end{cases}$$
+    \item To make the notation less cluttered, $M^{(n)} = M;\dots;M\, (n \text{ times})$.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Program : Examples}
+\begin{itemize}
+    \item Consider the following program:
+$$M = \left\vert \begin{array}{l}
+     \lo \\
+     \quad \inc(c_1,c_4);\dec(c_2) \\
+    \dec(c_3)^{(3)} \;\Or\; \inc(c_1) \\
+\end{array} \right. $$
+\pause
+The only reachable configuration of $\zero$ is $(1,0,0)$. That is,
+$$\zero \prog{M} \rho $$
+iff $\rho(c_1) = 1$ and $\rho(x) = 0$ $\forall$ $x \in \mathbb{C}\setminus \{c_1\}$.
+\pause
+\item Consider another program $M' = M;\test(c_1,c_3)$. There exists \textbf{no} configuration $\rho$ such that $\zero \prog{M'} \rho$.
+\end{itemize}
+
+
+
+\end{frame}
+
+
+\begin{frame}{Test Free and Checking Programs}
+    \begin{itemize}
+        \item A program is said to be \textbf{test-free} if it does not use the \test{} command at all.
+        \vfill
+        \item A program is said to be a \textbf{checking program} if is of the form $M;\test(c_1,\dots,c_n)$, where $M$ is a test-free program.
+    \end{itemize}
+\end{frame}
+
+\subsection{Simulating \rmfamily{\textbf{test}}}
+
+\begin{frame}{Simulating \rmfamily{\textbf{test}} command}
+    \begin{itemize}
+        \item For reasons that will be clear later, we are interested in converting a general program to a checking program. This obviously is NOT possible. 
+        \item So, we take an additional assumption that the sum of all counters in the general counter is bounded by some given number.
+        \item We need to `simulate' the command $\test(c)$  in some way, so that we can replace all the \test s that do not occur at the end.
+        
+    \end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Simulating \rmfamily{\textbf{test}} command}
+    \begin{itemize}
+        \item Consider a finite set $B$ of counters. $c\in B$ and we would like to simulate $\test(c)$. For this we use \textbf{two auxiliary counters} $x,y \notin B$.
+        \item The counters in $B$ are enumerated as $b_0,b_1,\dots b_{d}$ with $b_0 = c$.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Simulating \rmfamily{\textbf{test}} command}
+
+Consider the following program:
+
+    $$\r{simtest}_{y,B,x}(c) = \left\vert \begin{array}{l}
+        \lo \\
+        \quad \dec(b_1);\inc(b_0);\dec(y) \\
+        \vdots \\
+        \lo \\
+        \quad \dec(b_d);\inc(b_{d-1});\dec(y) \\
+        \lo \\
+        \quad \dec(b_{d-1});\inc(b_d);\dec(y) \\
+        \vdots \\
+        \lo \\
+        \quad \dec(b_1);\inc(b_0);\dec(y) \\
+        \dec(x)^{(2)}
+    \end{array} \right. $$
+\end{frame}
+
+\begin{frame}{Parsing the \r{simtest} program}
+    \begin{itemize}
+        \item Consider the configurations $\rho$ where
+        $$y \geq Kx$$
+        where $$K = \sum_{b\in B} \rho(b)$$
+
+        \item If $y \geq Kx$ was true before the \r{simtest} program, it will be maintained even after \r{simtest}. This is because if all the \lo{}s are executed maximally $y$ decreases by at most $2K$ and $x$ decreases by $2$.
+    \end{itemize}
+    
+\end{frame}
+
+\begin{frame}{To be precise:}
+    \begin{itemize}
+        \item $\alpha \prog{\test(c);\dec(y)^{(2K)};\dec(x)^{(2)}}\beta$ with $c \in B$ and $K = \alpha(\sum_{b\in B}b)$ implies
+        $$\alpha \prog{\r{simtest}_{y,B,x}(c)} \beta$$
+
+        \item $\alpha \prog{\r{simtest}_{y,B,x}(c)} \beta$ and if $y = Kx$ is satisfied by $\beta$ then $\alpha$ satisfies the same and
+        $$\alpha \prog{\test(c);\dec(y)^{(2K)};\dec(x)^{(2)}}\beta$$
+        \item A program contains multiple \test s which are replaced by \r{simtest}s. If $y = Kx$ is satisfied after all the \r{simtest}s, we can say that all the \test s were satisfied.
+    \end{itemize}
+\end{frame}
+
+% \begin{frame}{How exactly are we simulating \test ?}
+%     \begin{itemize}
+%         \item Let us say that we have a program $M = A; \test(c);A'$, where $A$ and $A'$ are test free. We can replace this by another program 
+%         $$M' = $$
+%     \end{itemize}
+% \end{frame}
+
+\subsection{$K$-preamplifiers}
+\begin{frame}{$K$-bounded semantics}
+
+\begin{itemize}
+    \item Let $\text{Conf}_{\leq K}$ denote the set of $K$-bounded configurations, that is
+    $$\text{Conf}_{\leq K} = \left\{\rho\,|\, \rho(\sum_{b\in B} b) \leq K,\, B \text{ is the set of non-zero counters}\right\}$$
+    \pause
+    \item $K$-bounded relation $\prog{M}_{\leq K}$ is defined as 
+    $$\prog{M}_{\leq K} = \begin{cases}
+        \prog{\cmd} \cap (\text{Conf}_{\leq K} \times \text{Conf}_{\leq K}) & \text{if } M = \cmd \\
+        \big(\prog{M_0}\big)^*\cap (\text{Conf}_{\leq K} \times \text{Conf}_{\leq K}) & \text{if } M = \lo\\
+        \prog{M_1}_{\leq K};\prog{M_2}_{\leq K} & \text{if } M = M_1;M_2\\
+        \prog{M_1}_{\leq K}\cup\prog{M_2}_{\leq K} & \text{if } M = M_1 \, \Or \, M_2\\        
+    \end{cases}$$
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}{$K$-preamplifiers}
+
+A $K$-preamplifier for a triple $(x,y,b)$ of counters is a \textbf{checking program} $A$ such that 
+\begin{itemize}
+    \item $\forall$ configurations $\beta$ with $\zero \prog{A} \beta$, we have $y \geq bx$ and $\beta(c) = 0$ $\forall$ $c \notin \{x,y,b\}$.
+    \item If $\beta$ satisfies $y = bx$, then $\beta(b) = K$.
+    \item $\forall$ $l \geq 1$ $\exists$ $\beta$ with $\zero \prog{A} \beta$ such that $y = bx$ and $x = l$. That is, $\forall$ $l \geq 1$,
+    $$\zero \prog{A} (x = l, y = Kl, b = K)$$
+\end{itemize}
+\pause
+Can you see the use of this? Loosely speaking : We can use a preamplifier before a general program to get all the $x,y$s (related by $y = Kx$) that we might need to `fuel' \r{simtest} (as for each \r{simtest} $y$ reduces by $2K$ and $x$ reduces by $2$).
+    
+\end{frame}
+
+
+\begin{frame}{$K$-bounded semantics}
+
+    \begin{itemize}
+        \item As mentioned earlier, we want to convert a general program to a checking program. 
+        \item Obviously, there will be a trade off - we restrict the general program to $K$-bounded semantics.
+        \pause
+        \item Given a general program $M$ and a $K$-preamplifier $A$, we can construct a checking program $A\triangleright M$ such that 
+        $$\zero \prog{M}_{\leq K} \beta $$ \textbf{iff}
+        $$\zero \prog{A\triangleright M} \beta$$
+    \end{itemize}
+    
+\end{frame}
+
+\section{Big Picture}
+
+ \subsection{Reduction}
+ 
+\begin{frame}{Petri Nets and Programs}
+
+    \begin{itemize}
+        \item So far we have seen many definitions in programs, but how is this relevant to petri nets?
+
+        \item Well, we can reduce a petri net to a program and vice versa!
+    \end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Petri Nets to Program}
+
+Consider a petri net $\mathcal{N} = ((P,T,F);\mu_{in})$
+
+    \begin{itemize}
+        \item For each place $p \in P$, we have a counter $c_p$. 
+        \item For each transition $t \in T$ we define 
+        $$M_t = \prod_{p \in {}^{\bullet} t} \dec(c_p); \prod_{p \in t^{\bullet}} \inc(c_p);$$
+        \item Define 
+        $$M_{in} = \prod_{p \in P}\inc(c_p)^{(\mu_{in}(p))};$$
+        \item The program for petri net is 
+        $$M_{\mathcal{N}} = \left\vert \begin{array}{l}
+            M_{in} \\
+            \lo \\
+            \quad \Or _ {t \in T} M_{t} \\
+    \end{array} \right.$$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Program to Petri Nets}
+    \begin{itemize}
+        \item First we can convert a test-free program  to a VASS.
+        \item VASS to petri-nets is known.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Reachability}
+
+    For a general program $M$, whether $\exists$ $\beta$ such that 
+    $$\zero \prog{M} \beta$$
+    is the reachability problem.
+
+    \begin{itemize}
+        \item For a general program, it is undecidable, even for 2-dimensions (2-counters).
+        \item For checking programs, it is equivalent to reachability in petri nets.
+        \item For test-free programs, it is equivalent to coverability in petri nets.
+    \end{itemize}
+
+\end{frame}
+
+\subsection{Plan}
+\begin{frame}{Rough Plan}
+    \begin{itemize}
+        \item Our goal was to find the complexity class of reachability problem in petri nets, which is equivalent to reachability problem in checking programs.
+
+        \item We also know that a checking program $A\triangleright M$ can be constructed such that $\zero \prog{A\triangleright M} \beta$ iff $\zero \prog{M}_{\leq K} \beta$.
+
+        \item Result (\textbf{R}) : For a 2-dimensional general program $M$ (2-counter program), the problem, 
+        whether $\exists$ $\beta$ such that $\zero \prog{M}_{\leq K} \beta $ takes at most $\text{poly}(K)$ time, that is, it is in $\mathcal{O}(K)$ time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Rough Plan}
+    \begin{itemize}
+        \item Assuming that \textbf{R} us true, we can build a checking program $A\triangleright M$, whose reachability takes $\mathcal{O}( K)$ time.
+        \item This means that there exists checking programs that take $\mathcal{O}(K)$ time. Hence, reachability of checking programs is  $\mathcal{O}(K)$-hard.
+        \item Now, we need to show that \textbf{R} is true and construct $A\triangleright M$.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{2-counter program}
+    \begin{itemize}
+        \item 2-dimensional general program is Turing complete, and is equivalent to 2-counter machine.
+        \item A 2-dimensional general program with $K$ bound has at most $K^{n}$ different possible states, ($n$ is the size of the program). So it should not take more than $K^n$ time to explore.
+        \item We can say that reachability in $K$-bounded 2-dimensional general program takes at most $K^n$ time.
+    \end{itemize}
+\end{frame}
+
+
+
+\section{Grzegorczyk Hierarchy}
+
+\begin{frame}{Fast Growing Functions}
+    Consider the following functions:
+    \begin{itemize}
+        \item $F_0(n) = n+1$
+        \item For all $i \geq 1$,
+        $F_i(n) = F^{n+1}_{i-1}(n)$
+    \end{itemize}
+    $F_2(n)$ is in $\textsc{Exp}$, $F_3(n)$ is in \textsc{Tower}.
+\vfill
+    Ackermann function $A(n)$ is defined as 
+    $$A(n) = F_\omega(n)$$
+    where $F_\omega(n) = F_{n+1}(n)$.
+\end{frame}
+
+\begin{frame}{Complexity Classes}
+   \begin{itemize}
+       \item Fast-Growing Complexity Classes:
+       $$\mathbb{F}_d := \bigcup_{p \in \mathcal{F}_{< d}} \textsc{DTime}(F_d(p(n))) $$
+       $p$ is a function in lower complexity classes. Example, $\textsc{Tower} = \mathbb{F}_3$.
+       \item Ackermann complexity: $$\textsc{Ack} = \mathbb{F}_\omega = \bigcup_{p \in \mathcal{F}_{< \omega}} \textsc{DTime}(F_\omega(p(n)))$$
+
+   \end{itemize}
+\end{frame}
+
+\begin{frame}{$\r{evalF}_d(v,n)$}
+   \begin{itemize}
+       \item For $v \in \mathbb{N}^d$,
+       $$F_v(n) := F_d^{v[d]}\circ \dots \circ F_1^{v[1]}(n) $$
+
+       \item $p$ is the minimal non-zero index and $1_{d,p}$ is unit vector in $d$-dimensions with $v[p] = 1$.
+       $$\text{evalF}_d(v,n) = \begin{cases}
+           (v - 1_{d,p}, 2n+1) & p = 1 \\
+           (v - 1_{d,p} + (n+1)1_{d,p-1}, n) & \text{otherwise}
+       \end{cases}$$
+       Examples:
+       \begin{enumerate}
+           \item $\text{evalF}_d((1,2,4),n) = ((0,2,4),2n+1)$
+           \item $\text{evalF}_d((0,0,4,0,5),n) = ((0,n+1,3,0,5),n)$
+       \end{enumerate}
+       Can you see what's happening?
+
+   \end{itemize}
+\end{frame}
+
+\begin{frame}{$\r{evalF}_d(v,n)$}
+   \begin{itemize}
+       \item If $\text{evalF}_v(n) = (w,m)$,
+       $$F_v(n) = F_w(m)$$
+
+       \item $$\text{evalF}_d^\text{max}(v,n) = (0_d, F_v(n))$$
+       In other words, $\text{evalF}_d$ applied maximal number of times.
+
+   \end{itemize}
+\end{frame}
+
+\section{Construction}
+
+\begin{frame}{\lo{} at most}
+       Given a test-free program $M$ that does not use the counters $c,c'$, we define
+       $$\loopam{c+c'}{M} = \left\vert \begin{array}{l}
+            \lo \\
+            \quad \dec(c);\inc(c') \\
+            \lo \\
+            \quad \inc(c);\dec(c');M
+    \end{array} \right.$$
+\end{frame}
+
+\begin{frame}{Program for $\text{evalF}_d$}
+
+       $$\text{evalF}_{d,p} = \left\vert \begin{array}{l}
+            \dec(c_p);\inc(c_{p-1})  \\
+            \lo \\
+            \quad \dec(x_1,\dots,x_{d+1}); \inc(y) \\
+            \loopam{x+x'}{} \\
+            \quad \dec(y);\inc(x_p );\inc(x_1 ,\dots , x_{d+1} ) \\
+            \loopam{c_0+c_0'}{} \\
+            \quad \inc(c_{p-1}) \\
+            \quad \loopam{x+x'}{} \\
+            \quad \quad \dec(x') \\
+            \quad \quad \loopam{b+b'}{} \\
+            \quad \quad \quad \dec(y);\inc(x_p);\inc(x_p ,\dots , x_{d+1} ) \\
+            \r{updateB}_{d,p} \\
+            
+    \end{array} \right.$$
+
+    $$\text{evalF}_d = \Or_{p=1}^{d} \text{evalF}_{d,p}$$
+\end{frame}
+
+
+
+\begin{frame}{Program for $\text{evalF}_d$}
+    For $p = 1$:
+       $$\r{updateB}_{d,p} = \left\vert \begin{array}{l}
+            \dec(c_0) \\
+            \loopam{c_0+c_0'}{} \\
+            \quad \dec(c_0');\inc(c_0) \\
+            \quad \loopam{b+b'}{}\\
+            \quad \quad \inc(b) \\
+            \dec(c_0) 
+    \end{array} \right.$$
+\end{frame}
+
+\begin{frame}{Good Configuration}
+\begin{itemize}
+    \item A configuration $\rho$ of counters $x,x',x_1,\dots,x_{d+1},y,b,b',c_0,c_0',c_1\dotsc_{d}$ is \textbf{good} if 
+    $$x' = y = b' = c'_0 = 0$$
+    $$x > 0$$
+    $$b = 2^{c_0}$$
+    $$x_1 = 2^{c_0}x,\, x_i = 2^{c_{i-1}}x_{i-1}$$
+    \item $\rho$ encodes $(v,n) \in \mathbb{N}^d\times\mathbb{N}$
+    $$\rho(c_1,\dots,c_d) = v$$
+    $$\rho(c_0) = n$$
+\end{itemize}
+    
+    
+\end{frame}
+
+
+\begin{frame}{Ackermannian Preamplifiers}
+
+Following is a $K$-preamplifier for $K = 2^{F_{d+1}(n)}$
+       $$\r{Ack}_{d,n} = \left\vert \begin{array}{l}
+            \inc(c_0)^{(n)};\inc(c_d)^{(n+1)} \\
+            \inc(x) ; \inc(x_1,\dots,x_d)^{(2^n)}; \inc(x_{d+1}^{(2^{2n+1})}) \\
+            \lo \\
+            \quad \inc(x) ; \inc(x_1,\dots,x_d)^{(2^n)}; \inc(x_{d+1}^{(2^{2n+1})}) \\
+            \lo \\
+            \quad \r{evalF}_d \\
+            \lo \\
+            \quad \inc(y);\dec(x_1,\dots,x_{d+1}) \\
+            \lo \\
+            \quad \dec(c_0) \\
+            \test(x_{d+1},b',c_0',c_0,\dots,c_d) 
+    \end{array} \right.$$
+Also, $\text{size}(\r{Ack}_{d,n}) = \mathcal{O}(d\,4^n)$
+\end{frame}
+
+\begin{frame}{Construction of $A\triangleright M$}
+       \begin{itemize}
+           \item Given a $K$-preamplifier on $(x,y,b)$, $A = A';\test(c_1,\dots,c_n)$ and a program $M$,
+           $$A\triangleright M = \left\vert \begin{array}{l}
+            A' \\
+            M' \\
+            \lo \\
+            \quad \dec(b) \\
+            \test(x,y,b,c_1,\dots,c_n) 
+    \end{array} \right.$$
+
+     \item $M'$ is $M$ with every $\inc(c)$ replaced with $\inc(c);\dec(b)$ and every $\dec(c)$ replaced with $\dec(c);\inc(b)$.
+       \end{itemize}
+\end{frame}
+
+\begin{frame}{Final Touch}
+    \begin{itemize}
+        \item Let $M$ be any general 2-dimensional program (at most 2 non-zero counters) with size($M$) = $n$.
+        \item Does there exist a $\beta$ 
+        $$\zero \prog{M}_{\leq K} \beta$$
+        for $K = 2^{F_d(n)}$ is $\mathbb{F}_d$-complete.
+        \pause
+        \item Turing Machine (space = $\mathcal{O}(\log S)$) $\longrightarrow$ 2-counter program (space = $\mathcal{O}(S)$). Since there exists a Turing machine of space $\log S$ which is $\mathcal{O}(S)$-complete in time, we can have a $\mathcal{O(S)}$-complete 2-counter program.  
+        \item NOTE that $2^{F_d(n) } \in \mathbb{F}_d$ : $$2^{F_d(n)} = \mathcal{O}(F_2(F_d(n))) \leq F_{d-1}(F_{d-1}^{n+1}(n)) = F_d(F_{d-1}(n))$$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Final Touch}
+    \begin{itemize}
+        \item Our whole objective is to show the lower bound $\mathbb{F}_\omega$ for reachability of a $n$-dimensional checking program. 
+        \item For this we need to show one example of a program that takes time equal to $\mathcal{O}(F_\omega(n))$.
+        
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Final Touch}
+    \begin{itemize}
+        \item Its simply $A\triangleright M$ for a 2-dimensional program size($M$) = $n$. We have a ($2n+4$)-dimensional checking program with size($A\triangleright M) = \textsc{Elem}(n)$, that takes $$F_{n+1}(n) = F_\omega(n)$$ time. 
+        \item Therefore, reachability of checking program is in $\mathbb{F}_\omega$. Done!
+    \end{itemize}
+\end{frame}
+
+
+
+\end{document}
